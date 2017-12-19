@@ -1,34 +1,100 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="css/style.css">
-<script type="text/javascript" src="js/paper.min.js"></script>
-<script type="text/javascript">
+    <meta charset="UTF-8">
+    <title>Mouse folowing Textpath</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="text/javascript" src="js/paper.min.js"></script>
+    <script type="text/paperscript" canvas="canvas">
 
-	paper.install(window);
+		var path = new Path({
+        // strokeColor: '#0000ff',
+        // strokeWidth: 1,
+        // strokeCap: 'round',
+    });
 
-	window.onload = function() {
+    var createAlignedText = function(str, path, style) {
+        if (str && str.length > 0 && path) {
+            // create PointText object for each glyph
+            var glyphTexts = [];
+            for (var i = 0; i < str.length; i++) {
+                glyphTexts[i] = createPointText(str.substring(i, i+1), style);
+                glyphTexts[i].justification = "center";
+            }
+            // for each glyph find center xOffset
+            var xOffsets = [0];
+            for (var i = 1; i < str.length; i++) {
+                var pairText = createPointText(str.substring(i - 1, i + 1), style);
+                pairText.remove();
+                xOffsets[i] = xOffsets[i - 1] + pairText.bounds.width -
+                    glyphTexts[i - 1].bounds.width / 2 - glyphTexts[i].bounds.width / 2;
+            }
+            // set point for each glyph and rotate glyph aorund the point
+            for (var i = 0; i < str.length; i++) {
+                var centerOffs = xOffsets[i];
+                if (path.length < centerOffs) {
+                    if (path.closed) {
+                        centerOffs = centerOffs % path.length;
+                    }  else {
+                        centerOffs = undefined;
+                    }
+                }
+                if (centerOffs === undefined) {
+                    glyphTexts[i].remove();
+                } else {
+                    var pathPoint = path.getPointAt(centerOffs);
+                    glyphTexts[i].point = pathPoint;
+                    var tan = path.getTangentAt(centerOffs);
+                    glyphTexts[i].rotate(tan.angle, pathPoint);
+                }
+            }
+        }
+    }
 
-		paper.setup('canvas');
-		// Create a simple drawing tool:
-		var tool = new Tool();
-		var path;
+    var word = "http://maximiliankiepe.de";
+    var points = word.length;
+    var length = word.length/3;
 
-		// Define a mousedown and mousedrag handler
-		tool.onMouseDown = function(event) {
-			path = new Path();
-			path.strokeColor = 'black';
-			path.add(event.point);
-		}
+    // create a PointText object for a string and a style
+    var createPointText = function(str, style) {
+      	var text = new PointText();
+      	text.content = str;
+				text.fillColor = '#0000ff';
+      	if (style) {
+      	    if (style.font) text.font = style.font;
+      	    if (style.fontFamily) text.fontFamily = style.fontFamily;
+      	    if (style.fontSize) text.fontSize = style.fontSize;
+      	    if (style.fontWeight) text.fontWeight = style.fontWeight;
+      	}
+      	return text;
+    }
 
-		tool.onMouseDrag = function(event) {
-			path.add(event.point);
-		}
-	}
+    var start = view.center / [10, 1];
+    for (var i = 0; i < points; i++){
+      	path.add(start + new Point(i * length, 0));
+    }
 
-</script>
+    function onMouseMove(event) {
+				project.clear();
+      	path.firstSegment.point = event.point;
+      	for (var i = 0; i < points - 1; i++) {
+      	    var segment = path.segments[i];
+      	    var nextSegment = segment.next;
+      	    var vector = segment.point - nextSegment.point;
+      	    vector.length = length;
+      	    nextSegment.point = segment.point - vector;
+      	}
+      	path.strokeColor = 'blue'
+      	path.smooth({ type: 'continuous' });
+      	createAlignedText(word, path, {
+      	  fontSize: 18,
+      	});
+      	//path.fullySelected = true;
+    }
+
+    </script>
 </head>
 <body>
-	<canvas id="canvas" resize></canvas>
+		<canvas id="canvas" resize></canvas>
 </body>
 </html>
