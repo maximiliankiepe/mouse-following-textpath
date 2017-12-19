@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="stylesheet" href="css/style.css">
 <script type="text/javascript" src="js/paper.min.js"></script>
 <script type="text/javascript">
 
 	paper.install(window);
+
 	window.onload = function() {
-		paper.setup('myCanvas');
+
+		paper.setup('canvas');
 		// Create a simple drawing tool:
 		var tool = new Tool();
 		var path;
@@ -22,10 +25,10 @@
 			path.add(event.point);
 		}
 	}
-	
+
 </script>
 </head>
 <body>
-	<canvas id="myCanvas" resize></canvas>
+	<canvas id="canvas" resize></canvas>
 </body>
 </html>
